@@ -4,9 +4,11 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from string import Template
 from sys import exit
 import config as cfg
+import subprocess
 import socket
 
 remote_ip = ''
+machine_config = None
 
 class HttpHandler(BaseHTTPRequestHandler):
     # Do not log, please
@@ -15,6 +17,7 @@ class HttpHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         global remote_ip
+        global machine_config
         # Verify path
         if self.path != '/d-i/' + cfg.release + '/preseed.cfg':
             self.send_response(404)
@@ -31,12 +34,24 @@ class HttpHandler(BaseHTTPRequestHandler):
         # Template and send configuration
         with open('preseeds/' + cfg.preseed + '.cfg', 'r') as raw:
             template = Template(raw.read())
-            self.wfile.write(template.substitute(cfg.machine_config))
+            self.wfile.write(template.substitute(machine_config))
 
         remote_ip = self.client_address[0]
 
+def run_in_ansible_home(args):
+    return subprocess.Popen(args, stdout=subprocess.PIPE, cwd=cfg.ansible_home).communicate()[0]
+
+def get_ansible_value(name):
+    ret = run_in_ansible_home([ 'ansible', 'localhost', '-m', 'debug', '-a', 'msg={{ ' + name + ' }}' ])
+    for line in ret.split('\n'):
+        if '"msg"' in line:
+            return line.split('"')[3]
 
 if __name__ == "__main__":
+    # Parse playbook values
+    machine_config = cfg.machine_config
+    machine_config.username = get_ansible_value('ansible_user')
+
     # HTTP server
     addr = ('', cfg.port)
     http_server = HTTPServer(addr, HttpHandler)
