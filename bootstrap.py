@@ -3,6 +3,7 @@
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from string import Template
 from sys import exit
+from time import sleep
 import config as cfg
 import subprocess
 import socket
@@ -50,7 +51,7 @@ def get_ansible_value(name):
 if __name__ == "__main__":
     # Parse playbook values
     machine_config = cfg.machine_config
-    machine_config.username = get_ansible_value('ansible_user')
+    # TODO machine_config.username = get_ansible_value('ansible_user')
 
     # HTTP server
     addr = ('', cfg.port)
@@ -65,6 +66,7 @@ if __name__ == "__main__":
     print('Waiting for SSH to become available')
     sock = socket.socket()
     while True:
+        sleep(10)
         try:
             sock.connect((remote_ip, 22))
         except socket.timeout, err:

@@ -3,8 +3,8 @@ import random
 
 port = 8080
 release = 'stretch'
-preseed = 'test'
-ansible_home = '/home/janne/infra/stuvus/stuvus_config'
+preseed = 'basic'
+ansible_home = '/home/janne/stuvus_config'
 
 machine_config = {
         'hostname': 'test',
